@@ -46,7 +46,7 @@ class PPOTransformerModel(PPOModel):
                                          self.action_embed_dim)
         self.step_embed = nn.Embedding(self.step_dim, self.step_embed_dim)
 
-        self.linear_i = nn.Linear(self.input_dim, self.hidden_dim)
+        self.linear_i = nn.Linear(867, self.hidden_dim) #nn.Linear(self.input_dim, self.hidden_dim)
         # self.linear_o = nn.Linear(self.hidden_dim * self.window_size,
         #                           self.hidden_dim)
 
@@ -75,25 +75,25 @@ class PPOTransformerModel(PPOModel):
         return ret.masked_fill(mask.unsqueeze(-1), 0.0)
 
     def forward(self, obs: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
-        obs = obs.to(torch.int64)
+        #obs = obs.to(torch.int64)
         assert obs.dim() == 3
 
         # batch_size = obs.size(0)
-        unbind_obs = torch.unbind(obs, dim=-1)
+        #unbind_obs = torch.unbind(obs, dim=-1)
 
-        ls = unbind_obs[:-2]
-        act = unbind_obs[-2]
-        stp = unbind_obs[-1]
+        #ls = unbind_obs[:-2]
+        #act = unbind_obs[-2]
+        #stp = unbind_obs[-1]
 
-        act = self.make_embedding(act, self.action_embed)
-        stp = self.make_embedding(stp, self.step_embed)
+        #act = self.make_embedding(act, self.action_embed)
+        #stp = self.make_embedding(stp, self.step_embed)
         
-        x = torch.cat((act, stp), dim=-1)
-        
-        for l in ls:
-            l_transform = self.make_one_hot(l, self.letter_dim)
-            x = torch.cat((l_transform,x), dim=-1)
-        
+        #x = torch.cat((act, stp), dim=-1)
+        #print(ls) 
+        #for l in ls[::-1]:
+        #    l_transform = self.make_one_hot(l, self.letter_dim)
+        #    x = torch.cat((l_transform,x), dim=-1)
+        x = obs
         x = self.linear_i(x)
         x = x.transpose(0, 1).contiguous()
         h = self.encoder(x)

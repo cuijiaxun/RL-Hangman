@@ -9,3 +9,5 @@ class MetricCallbacks(EpisodeCallbacks):
     def on_episode_step(self, index: int, step: int, action: Action,
                         timestep: TimeStep) -> None:
         info = timestep.info
+        if "success" in info.keys():
+           self._custom_metrics["correct_rate"] = float(info["success"]) 

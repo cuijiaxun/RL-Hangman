@@ -31,7 +31,7 @@ from utils.wandb_logger import WandbLogger
 
 @hydra.main(config_path="../config", config_name="hangman")
 def main(cfg):
-    #wandb_logger = WandbLogger(project="rl4cache", config=cfg)
+    #wandb_logger = WandbLogger(project="hangman", config=cfg)
     my_callbacks = MetricCallbacks()
     logging.info(hydra_utils.config_to_json(cfg))
 
@@ -116,7 +116,7 @@ def main(cfg):
                 stats.json(info, phase="Train", epoch=epoch, time=cur_time))
         train_stats = stats
         time.sleep(1)
-
+        '''
         stats = agent.eval(cfg.num_eval_episodes)
         cur_time = time.perf_counter() - start_time
         info = f"E Epoch {epoch}"
@@ -128,10 +128,10 @@ def main(cfg):
         eval_stats = stats
         time.sleep(1)
         
-        #wandb_logger.log(train_stats, eval_stats)
+        wandb_logger.log(train_stats, eval_stats)
 
         torch.save(train_model.state_dict(), f"ppo_agent-{epoch}.pth")
-
+        '''
     loops.terminate()
     servers.terminate()
 

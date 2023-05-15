@@ -15,14 +15,14 @@ class HangmanEnv(gym.Env):
 
         with open("/home/cuijiaxun/Projects/RL-Hangman/env/words_250000_train.txt",'r') as f:
             self.wordlist = f.read().splitlines()
-        self.max_life = env_config.max_life
-        self.num_life = env_config.max_life
+        self.max_life = 6 #env_config.max_life or 6
+        self.num_life = 6 #env_config.max_life or 6
         self.letters = string.ascii_lowercase
-        self.action_space = spaces.Discrete(env_config.action_space)
-        self.state_space = env_config.state_space
-        self.history_length = env_config.history_length
-        self.map=dict(zip([*string.ascii_lowercase], np.arange(1,27)))
-        self.map.update({'_':27})
+        self.action_space = spaces.Discrete(26) #env_config.action_space or 26)
+        self.state_space = 32 #env_config.state_space or 32
+        self.history_length = 26 #env_config.history_length or 26
+        self.map=dict(zip([*string.ascii_lowercase], np.arange(0,26)))
+        self.map.update({'_':26})
         self.reverse_map=dict(zip(np.arange(0,26), [*string.ascii_lowercase]))
         self.observation_space = spaces.Box(low=-1, high=28, shape=(self.history_length, 32))
 
@@ -47,7 +47,7 @@ class HangmanEnv(gym.Env):
         self.obs.append(self.current_obs)
         self.obs.popleft()
         done = False
-        return np.array(list(reversed(self.obs)), dtype=np.float32)
+        return one_hot(np.array(list(reversed(self.obs)), dtype=int))
 
     def step(self, action):
         action = self.reverse_map[int(action)]
@@ -68,10 +68,12 @@ class HangmanEnv(gym.Env):
             if self.num_life == 0:
                 reward = -1
                 done = True
+                info["success"] = False
         
         if ''.join(self.state) == self.secret_word:
             reward = 1
             done = True
+            info["success"] = True
         
         self.action_mask[self.letters.find(action)] = False
         
@@ -88,19 +90,38 @@ class HangmanEnv(gym.Env):
         self.obs.append(self.current_obs)
         self.obs.popleft()
       
-        return np.array(list(reversed(self.obs)),dtype=np.float32), reward, done, info
+        return one_hot(np.array(list(reversed(self.obs)),dtype=int)), reward, done, info
 
+def one_hot(obs):
+    total_obs = []
+    for i in range(obs.shape[0]):
+        curr_encode = []
+        for j in range(obs.shape[1]-2):
+            code = np.zeros(28)
+            code[obs[i][j]+1] = 1
+            curr_encode.extend(list(code))
+        j = obs.shape[1]-2
+        code = np.zeros(26)
+        code[obs[i][j]] = 1
+        curr_encode.extend(list(code))
+        curr_encode.extend([obs[i][-1]])
+        total_obs.append(curr_encode)
+    return np.array(total_obs, dtype=np.float32)
 
 if __name__ == "__main__":
-    env = HangmanEnv()
+    env = HangmanEnv(env_config={"max_life":6,
+                "action_space":26,
+                "state_space":32,
+                "history_length":26}
+            )
     
     for i in range(2):
-        obs, done = env.reset()
+        obs = env.reset()
+        done = False
         print(obs)
         print("Please guess a letter:")
         while not done:
-
-            from IPython import embed; embed()
+            print(obs.shape)
             print(env.action_mask)
             print("Remaining life:", env.num_life)
             next_state, reward, done, info = env.step(input())

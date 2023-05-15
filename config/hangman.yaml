@@ -19,11 +19,11 @@ cd_server_addr: "127.0.0.1:4733"
 train_device: "cuda:0"
 infer_device: "cuda:0"
 
-num_train_rollouts: 1 #72 #48 #24
-num_train_workers: 1  #24
+num_train_rollouts: 24 #72 #48 #24
+num_train_workers: 8  #24
 
-num_eval_rollouts: 1 #2
-num_eval_workers: 1 #2
+num_eval_rollouts: 6 #2
+num_eval_workers: 2 #2
 
 replay_buffer_size: 65536
 prefetch: 2
@@ -35,9 +35,9 @@ learning_starts: 65536
 push_every_n_steps: 10
 
 num_epochs: 3000
-steps_per_epoch: 3000
+steps_per_epoch: 300
 
-num_eval_episodes: 100
+num_eval_episodes: 30
 
 train_seed: 123
 eval_seed: 456
