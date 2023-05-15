@@ -1,0 +1,4 @@
+max_life: 6
+action_space: 26
+state_space: 32
+history_length: 26

@@ -1,0 +1,9 @@
+letter_dim: 28
+action_dim: 26
+step_dim: 26
+window_size: 26
+action_embed_dim: 26
+step_embed_dim: 26
+hidden_dim: 128
+output_dim: -1
+num_layers: 1
