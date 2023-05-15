@@ -30,7 +30,8 @@ class WandbLogger:
         else:
             # decode train stats:
             train_stats = stats_filter(train_stats, prefix="train")
-            eval_stats = stats_filter(eval_stats, prefix="eval")
+            if bool(eval_stats):
+                eval_stats = stats_filter(eval_stats, prefix="eval")
 
         train_stats.update(eval_stats)
         stats = train_stats

@@ -45,8 +45,11 @@ class PPOTransformerModel(PPOModel):
         self.action_embed = nn.Embedding(self.action_dim,
                                          self.action_embed_dim)
         self.step_embed = nn.Embedding(self.step_dim, self.step_embed_dim)
+        self.position_embed = nn.Embedding(31,
+                                           4)
+        self.life_embed = nn.Embedding(7, 4)
 
-        self.linear_i = nn.Linear(867, self.hidden_dim) #nn.Linear(self.input_dim, self.hidden_dim)
+        self.linear_i = nn.Linear(61, self.hidden_dim) #nn.Linear(self.input_dim, self.hidden_dim)
         # self.linear_o = nn.Linear(self.hidden_dim * self.window_size,
         #                           self.hidden_dim)
 
@@ -93,7 +96,19 @@ class PPOTransformerModel(PPOModel):
         #for l in ls[::-1]:
         #    l_transform = self.make_one_hot(l, self.letter_dim)
         #    x = torch.cat((l_transform,x), dim=-1)
-        x = obs
+        #letter = obs[:,:,:27]
+        #position = self.position_embed(obs[:,:,27].to(torch.int64))
+        #guessed = obs[:,:,28:54]
+        #max_life = self.life_embed(obs[:,:,54].to(torch.int64))
+        letter, position, guessed, max_life = torch.tensor_split(obs,(27,28,54), dim=-1)
+        assert letter.size(2) == 27
+        assert guessed.size(2) == 26
+        position = self.position_embed(position.to(torch.int64).squeeze(2))
+        assert position.dim()==3
+        max_life = self.life_embed(max_life.to(torch.int64).squeeze(2))
+        assert max_life.dim()==3
+        x = torch.cat((letter, guessed, position, max_life), dim=-1)
+        #x = obs
         x = self.linear_i(x)
         x = x.transpose(0, 1).contiguous()
         h = self.encoder(x)

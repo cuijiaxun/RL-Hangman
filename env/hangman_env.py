@@ -25,6 +25,7 @@ class HangmanEnv(gym.Env):
         self.map.update({'_':26})
         self.reverse_map=dict(zip(np.arange(0,26), [*string.ascii_lowercase]))
         self.observation_space = spaces.Box(low=-1, high=28, shape=(self.history_length, 32))
+        self.max_episode_length = 64
 
     def reset(self):
         self.secret_word = random.choice(self.wordlist)
@@ -33,6 +34,7 @@ class HangmanEnv(gym.Env):
         self.state = ['_' for i in range(self.len_secret_word)]
         self.num_life = self.max_life
         self.action_mask = [True] * self.action_space.n
+        self.guessed = np.zeros(self.action_space.n)
         self.obs = deque([[-1]*32]*self.history_length)
         self.current_obs = []
         for i in range(self.state_space):
@@ -47,12 +49,15 @@ class HangmanEnv(gym.Env):
         self.obs.append(self.current_obs)
         self.obs.popleft()
         done = False
-        return one_hot(np.array(list(reversed(self.obs)), dtype=int))
+        return self.one_hot(np.array(list(reversed(self.obs)), dtype=int))
 
     def step(self, action):
+        reward = 0
+        if self.guessed[int(action)] == 1:
+            reward = -0.03
+        self.guessed[int(action)] = 1
         action = self.reverse_map[int(action)]
         matched = False
-        reward = 0
         done = False
         info = {}
         self.step_count += 1
@@ -69,12 +74,20 @@ class HangmanEnv(gym.Env):
                 reward = -1
                 done = True
                 info["success"] = False
-        
+        else:
+            reward += 0.01
+
         if ''.join(self.state) == self.secret_word:
             reward = 1
             done = True
             info["success"] = True
         
+        if self.step_count >= self.max_episode_length:
+            done = True
+            if "success" in info.keys():
+                info["success"]=info["success"]
+            else:
+                info["success"]=False
         self.action_mask[self.letters.find(action)] = False
         
         self.current_obs = []
@@ -89,24 +102,34 @@ class HangmanEnv(gym.Env):
                 self.current_obs.append(self.step_count)
         self.obs.append(self.current_obs)
         self.obs.popleft()
-      
-        return one_hot(np.array(list(reversed(self.obs)),dtype=int)), reward, done, info
+        info["state"] = self.state 
+        return self.one_hot(np.array(list(reversed(self.obs)),dtype=int)), reward, done, info
 
-def one_hot(obs):
-    total_obs = []
-    for i in range(obs.shape[0]):
-        curr_encode = []
-        for j in range(obs.shape[1]-2):
-            code = np.zeros(28)
-            code[obs[i][j]+1] = 1
+    def one_hot(self, obs):
+        '''
+        total_obs = []
+        for i in range(obs.shape[0]):
+            curr_encode = []
+            for j in range(obs.shape[1]-2):
+                code = np.zeros(28)
+                code[obs[i][j]+1] = 1
+                curr_encode.extend(list(code))
+            j = obs.shape[1]-2
+            code = np.zeros(26)
+            code[obs[i][j]] = 1
             curr_encode.extend(list(code))
-        j = obs.shape[1]-2
-        code = np.zeros(26)
-        code[obs[i][j]] = 1
-        curr_encode.extend(list(code))
-        curr_encode.extend([obs[i][-1]])
-        total_obs.append(curr_encode)
-    return np.array(total_obs, dtype=np.float32)
+            curr_encode.extend([obs[i][-1]])
+            total_obs.append(curr_encode)
+        '''
+        total_obs = np.zeros((30,55))
+        for i in range(total_obs.shape[0]):
+            if i < len(self.state):
+                letter = self.state[i]
+                total_obs[i][self.map[letter]] = 1
+                total_obs[i][27]=(i+1)#/30
+            total_obs[i][28:54]=self.guessed
+            total_obs[i][54]=self.num_life#/6
+        return np.array(total_obs, dtype=np.float32)
 
 if __name__ == "__main__":
     env = HangmanEnv(env_config={"max_life":6,
