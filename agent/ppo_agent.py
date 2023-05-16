@@ -59,24 +59,26 @@ class PPOAgent(PPOAgent):
 
     def act(self, timestep: TimeStep) -> Action:
         obs = timestep.observation
-        # reload_model = timestep.info.get("episode_reset", False)
-        # action, logpi, v = self.model.act(
-        #     obs, torch.tensor([self.deterministic_policy]), reload_model)
+        action_mask = None
+        if "action_mask" in timestep.info.keys():
+            action_mask = torch.Tensor(timestep.info["action_mask"])
         action, logpi, v = self.model.act(
-            obs, torch.tensor([self.deterministic_policy]))
+            obs, torch.tensor([self.deterministic_policy]),
+            invalid_action=action_mask)
         return Action(action, info={"logpi": logpi, "v": v})
 
     async def async_act(self, timestep: TimeStep) -> Action:
         obs = timestep.observation
-        # reload_model = timestep.info.get("episode_reset", False)
-        # action, logpi, v = await self.model.async_act(
-        #     obs, torch.tensor([self.deterministic_policy]), reload_model)
+        action_mask = None
+        if "action_mask" in timestep.info.keys():
+            action_mask = torch.Tensor(timestep.info["action_mask"])
         action, logpi, v = await self.model.async_act(
-            obs, torch.tensor([self.deterministic_policy]))
+            obs, torch.tensor([self.deterministic_policy]),
+            invalid_action=action_mask)
         return Action(action, info={"logpi": logpi, "v": v})
 
     def train(self, num_steps: int) -> Optional[StatsDict]:
-        #self.controller.set_phase(Phase.TRAIN, reset=True)
+        self.controller.set_phase(Phase.TRAIN, reset=True)
 
         self.replay_buffer.warm_up(self.learning_starts)
         stats = StatsDict()
@@ -109,7 +111,7 @@ class PPOAgent(PPOAgent):
         return stats
 
     def eval(self, num_episodes: Optional[int] = None) -> Optional[StatsDict]:
-        #self.controller.set_phase(Phase.EVAL, limit=num_episodes, reset=True)
+        self.controller.set_phase(Phase.EVAL, limit=num_episodes, reset=True)
         while self.controller.get_count() < num_episodes:
             time.sleep(1)
         stats = self.controller.get_stats()

@@ -14,7 +14,7 @@ import rlmeta.utils.hydra_utils as hydra_utils
 import rlmeta.utils.remote_utils as remote_utils
 
 from rlmeta.agents.agent import AgentFactory
-from rlmeta.agents.ppo.ppo_agent import PPOAgent
+#from rlmeta.agents.ppo.ppo_agent import PPOAgent
 from rlmeta.core.controller import Phase, Controller
 from rlmeta.core.loop import LoopList, ParallelLoop
 from rlmeta.core.model import wrap_downstream_model
@@ -28,6 +28,7 @@ from env import HangmanEnvFactory
 from models import PPOTransformerModel
 from utils.metric_callbacks import MetricCallbacks
 from utils.wandb_logger import WandbLogger
+from agent import PPOAgent
 
 @hydra.main(config_path="../config", config_name="hangman")
 def main(cfg):

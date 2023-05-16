@@ -2,7 +2,7 @@ import os
 import sys
 
 from typing import Dict, List, Tuple, Optional, Union
-
+import numpy as np
 import gym
 import random
 
@@ -123,7 +123,7 @@ class PPOTransformerModel(PPOModel):
 
     @remote.remote_method(batch_size=128)
     def act(
-        self, obs: torch.Tensor, deterministic_policy: torch.Tensor, reload_model=False
+            self, obs: torch.Tensor, deterministic_policy: torch.Tensor, invalid_action: Optional[torch.Tensor]
     ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         if self._device is None:
             self._device = next(self.parameters()).device
@@ -132,7 +132,10 @@ class PPOTransformerModel(PPOModel):
             x = obs.to(self._device)
             d = deterministic_policy.to(self._device)
             logpi, v = self.forward(x)
-
+            if invalid_action is not None:
+                invalid_action = invalid_action.to(logpi.get_device())
+                min_value = max(abs(logpi.max()), abs(logpi.min())) + 1.0
+                logpi = logpi - invalid_action * min_value
             greedy_action = logpi.argmax(-1, keepdim=True)
             sample_action = logpi.exp().multinomial(1, replacement=True)
             action = torch.where(d, greedy_action, sample_action)

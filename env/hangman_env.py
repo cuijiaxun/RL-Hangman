@@ -49,7 +49,9 @@ class HangmanEnv(gym.Env):
         self.obs.append(self.current_obs)
         self.obs.popleft()
         done = False
-        return self.one_hot(np.array(list(reversed(self.obs)), dtype=int))
+        info = {}
+        info["action_mask"] = self.guessed
+        return self.one_hot(np.array(list(reversed(self.obs)), dtype=int)), info
 
     def step(self, action):
         reward = 0
@@ -74,8 +76,8 @@ class HangmanEnv(gym.Env):
                 reward = -1
                 done = True
                 info["success"] = False
-        else:
-            reward += 0.01
+        #else:
+        #    reward += 0.01
 
         if ''.join(self.state) == self.secret_word:
             reward = 1
@@ -88,8 +90,9 @@ class HangmanEnv(gym.Env):
                 info["success"]=info["success"]
             else:
                 info["success"]=False
+                reward = -1
         self.action_mask[self.letters.find(action)] = False
-        
+        info["action_mask"] = self.guessed 
         self.current_obs = []
         for i in range(self.state_space):
             if i < len(self.state):

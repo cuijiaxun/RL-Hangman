@@ -78,9 +78,9 @@ class GymWrapper(Env):
         return self._metadata
 
     def reset(self, *args, **kwargs) -> TimeStep:
-        obs = self._env.reset(*args, **kwargs)
+        obs, info = self._env.reset(*args, **kwargs)
         obs = self._observation_fn(obs)
-        return TimeStep(obs, done=False, info={})
+        return TimeStep(obs, done=False, info=info)
 
     def step(self, action: Action) -> TimeStep:
         act = action.action
