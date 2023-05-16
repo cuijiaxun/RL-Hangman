@@ -34,7 +34,7 @@ class PPOAgent(PPOAgent):
                  optimizer: Optional[torch.optim.Optimizer] = None,
                  batch_size: int = 128,
                  grad_clip: float = 1.0,
-                 gamma: float = 0.99,
+                 gamma: float = 0.999,
                  gae_lambda: float = 0.95,
                  eps_clip: float = 0.2,
                  vf_loss_coeff: float = 0.5,

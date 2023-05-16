@@ -13,7 +13,7 @@ class HangmanEnv(gym.Env):
                 "state_space":32,
                 "history_length":26}):
 
-        with open("/home/cuijiaxun/Projects/RL-Hangman/env/words_250000_train.txt",'r') as f:
+        with open("/u/jxcui/Documents/Projects/RL-Hangman/env/words_250000_train.txt",'r') as f:
             self.wordlist = f.read().splitlines()
         self.max_life = 6 #env_config.max_life or 6
         self.num_life = 6 #env_config.max_life or 6
@@ -55,8 +55,10 @@ class HangmanEnv(gym.Env):
 
     def step(self, action):
         reward = 0
+        if int(action) < 0 or int(action) >= 26:
+            print("!!!!!!!", action)
         if self.guessed[int(action)] == 1:
-            reward = -0.03
+            reward = -0.00
         self.guessed[int(action)] = 1
         action = self.reverse_map[int(action)]
         matched = False
@@ -73,7 +75,7 @@ class HangmanEnv(gym.Env):
         if not matched:
             self.num_life -= 1
             if self.num_life == 0:
-                reward = -1
+                reward = -1.0
                 done = True
                 info["success"] = False
         #else:
@@ -90,7 +92,7 @@ class HangmanEnv(gym.Env):
                 info["success"]=info["success"]
             else:
                 info["success"]=False
-                reward = -1
+                reward = -1.0
         self.action_mask[self.letters.find(action)] = False
         info["action_mask"] = self.guessed 
         self.current_obs = []

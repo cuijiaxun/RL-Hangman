@@ -101,6 +101,9 @@ class PPOTransformerModel(PPOModel):
         #guessed = obs[:,:,28:54]
         #max_life = self.life_embed(obs[:,:,54].to(torch.int64))
         letter, position, guessed, max_life = torch.tensor_split(obs,(27,28,54), dim=-1)
+        invalid_action = torch.unbind(guessed, dim =-2)[0]
+        #print("1:",torch.unbind(guessed, dim=-2)[0])
+        #print("2:",torch.unbind(guessed, dim=-2)[1])
         assert letter.size(2) == 27
         assert guessed.size(2) == 26
         position = self.position_embed(position.to(torch.int64).squeeze(2))
@@ -116,6 +119,11 @@ class PPOTransformerModel(PPOModel):
         h = h.mean(dim=0)
 
         p = self.linear_a(h)
+        if invalid_action is not None:
+            invalid_action = invalid_action.to(p.get_device())
+            min_value = p.max() - p.min() + 1.0
+            p = p - invalid_action * min_value
+
         logpi = F.log_softmax(p, dim=-1)
         v = self.linear_v(h)
 
@@ -132,10 +140,7 @@ class PPOTransformerModel(PPOModel):
             x = obs.to(self._device)
             d = deterministic_policy.to(self._device)
             logpi, v = self.forward(x)
-            if invalid_action is not None:
-                invalid_action = invalid_action.to(logpi.get_device())
-                min_value = max(abs(logpi.max()), abs(logpi.min())) + 1.0
-                logpi = logpi - invalid_action * min_value
+            
             greedy_action = logpi.argmax(-1, keepdim=True)
             sample_action = logpi.exp().multinomial(1, replacement=True)
             action = torch.where(d, greedy_action, sample_action)

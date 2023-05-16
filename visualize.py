@@ -9,7 +9,7 @@ from utils.gym_wrappers import GymWrapper
 @hydra.main(config_path="config", config_name="hangman")
 def main(cfg):
     model = PPOTransformerModel(**cfg.model_config).to(cfg.train_device)
-    checkpoint = torch.load("/home/cuijiaxun/Projects/RL-Hangman/outputs/2023-05-15/22-15-44/ppo_agent-430.pth")
+    checkpoint = torch.load("/u/jxcui/Documents/Projects/RL-Hangman/outputs/2023-05-16/12-41-47/ppo_agent-60.pth")
     model.load_state_dict(checkpoint)
     env = HangmanEnv(cfg.env_config)
     env = GymWrapper(env)
